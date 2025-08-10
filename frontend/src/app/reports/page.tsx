@@ -1,56 +1,124 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
 
 export default function ReportsPage() {
   const [selectedReport, setSelectedReport] = useState('sentiment-summary')
   const [dateRange, setDateRange] = useState('30d')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [reportData, setReportData] = useState<Record<string, any>>({})
 
-  // Mock report data
-  const reportData = {
-    'sentiment-summary': {
-      title: 'Sentiment Analysis Summary Report',
-      description: 'Comprehensive overview of customer sentiment across all platforms',
-      data: {
-        totalMentions: 15847,
-        positiveRate: 68.2,
-        negativeRate: 17.8,
-        neutralRate: 14.0,
-        averageScore: 7.3,
-        topKeywords: ['excellent', 'quality', 'fast delivery', 'helpful', 'satisfied'],
-        bottomKeywords: ['slow', 'expensive', 'confusing', 'delayed', 'poor']
-      }
-    },
-    'platform-analysis': {
-      title: 'Platform Performance Analysis',
-      description: 'Detailed breakdown of sentiment across different social media platforms',
-      data: {
-        platforms: [
-          { name: 'Twitter', mentions: 5432, positive: 65, negative: 20, neutral: 15 },
-          { name: 'Instagram', mentions: 4321, positive: 72, negative: 15, neutral: 13 },
-          { name: 'Facebook', mentions: 3876, positive: 61, negative: 22, neutral: 17 },
-          { name: 'Reviews', mentions: 2218, positive: 74, negative: 18, neutral: 8 }
-        ]
-      }
-    },
-    'trend-analysis': {
-      title: 'Sentiment Trend Analysis',
-      description: 'Historical sentiment trends and pattern analysis',
-      data: {
-        trends: [
-          { date: '2024-01-01', positive: 65, negative: 20, neutral: 15 },
-          { date: '2024-01-08', positive: 68, negative: 18, neutral: 14 },
-          { date: '2024-01-15', positive: 71, negative: 16, neutral: 13 },
-          { date: '2024-01-22', positive: 69, negative: 19, neutral: 12 },
-          { date: '2024-01-29', positive: 73, negative: 15, neutral: 12 }
-        ]
+  // Function to generate dynamic report data based on date range
+  const generateReportData = (reportType: string, dateRange: string) => {
+    const dateMultiplier = dateRange === '7d' ? 0.25 : dateRange === '30d' ? 1 : dateRange === '90d' ? 3 : dateRange === '1y' ? 12 : 1
+    
+    const baseData = {
+      'sentiment-summary': {
+        title: 'Sentiment Analysis Summary Report',
+        description: 'Comprehensive overview of customer sentiment across all platforms',
+        data: {
+          totalMentions: Math.floor((Math.random() * 5000 + 10000) * dateMultiplier),
+          positiveRate: Math.floor(Math.random() * 20 + 60), // 60-80%
+          negativeRate: Math.floor(Math.random() * 15 + 10), // 10-25%
+          neutralRate: Math.floor(Math.random() * 10 + 10), // 10-20%
+          averageScore: (Math.random() * 2 + 6).toFixed(1), // 6.0-8.0
+          topKeywords: ['excellent', 'quality', 'fast delivery', 'helpful', 'satisfied'],
+          bottomKeywords: ['slow', 'expensive', 'confusing', 'delayed', 'poor']
+        }
+      },
+      'platform-analysis': {
+        title: 'Platform Performance Analysis',
+        description: 'Detailed breakdown of sentiment across different social media platforms',
+        data: {
+          platforms: [
+            { 
+              name: 'Twitter', 
+              mentions: Math.floor((Math.random() * 2000 + 3000) * dateMultiplier), 
+              positive: Math.floor(Math.random() * 20 + 60), 
+              negative: Math.floor(Math.random() * 15 + 15), 
+              neutral: Math.floor(Math.random() * 10 + 10) 
+            },
+            { 
+              name: 'Instagram', 
+              mentions: Math.floor((Math.random() * 1500 + 2500) * dateMultiplier), 
+              positive: Math.floor(Math.random() * 25 + 65), 
+              negative: Math.floor(Math.random() * 10 + 10), 
+              neutral: Math.floor(Math.random() * 8 + 8) 
+            },
+            { 
+              name: 'Facebook', 
+              mentions: Math.floor((Math.random() * 1200 + 2000) * dateMultiplier), 
+              positive: Math.floor(Math.random() * 20 + 55), 
+              negative: Math.floor(Math.random() * 15 + 18), 
+              neutral: Math.floor(Math.random() * 12 + 12) 
+            },
+            { 
+              name: 'Reviews', 
+              mentions: Math.floor((Math.random() * 800 + 1500) * dateMultiplier), 
+              positive: Math.floor(Math.random() * 25 + 70), 
+              negative: Math.floor(Math.random() * 12 + 12), 
+              neutral: Math.floor(Math.random() * 6 + 6) 
+            }
+          ]
+        }
+      },
+      'trend-analysis': {
+        title: 'Sentiment Trend Analysis',
+        description: 'Historical sentiment trends and pattern analysis',
+        data: {
+          trends: generateTrendData(dateRange)
+        }
       }
     }
+    
+    return baseData[reportType as keyof typeof baseData]
   }
 
+  // Function to generate trend data based on date range
+  const generateTrendData = (dateRange: string) => {
+    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : dateRange === '90d' ? 90 : dateRange === '1y' ? 365 : 30
+    const interval = dateRange === '1y' ? 30 : dateRange === '90d' ? 7 : 1 // Show every 30 days for year, every 7 days for 90d, daily for others
+    const dataPoints = Math.ceil(days / interval)
+    
+    const trends = []
+    const today = new Date()
+    
+    for (let i = dataPoints - 1; i >= 0; i--) {
+      const date = new Date(today)
+      date.setDate(date.getDate() - (i * interval))
+      
+      trends.push({
+        date: date.toISOString().split('T')[0],
+        positive: Math.floor(Math.random() * 20 + 60), // 60-80%
+        negative: Math.floor(Math.random() * 15 + 10), // 10-25%
+        neutral: Math.floor(Math.random() * 10 + 10)   // 10-20%
+      })
+    }
+    
+    return trends
+  }
+
+  // Update report data when dropdowns change
+  useEffect(() => {
+    const newReportData = generateReportData(selectedReport, dateRange)
+    setReportData(prev => ({
+      ...prev,
+      [selectedReport]: newReportData
+    }))
+    console.log('Updated report data for:', selectedReport, 'with date range:', dateRange)
+  }, [selectedReport, dateRange])
+
   const currentReport = reportData[selectedReport as keyof typeof reportData]
+
+  // Show loading state if report data is not yet available
+  if (!currentReport) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
 
   const handleGenerateReport = async () => {
     setIsGenerating(true)
