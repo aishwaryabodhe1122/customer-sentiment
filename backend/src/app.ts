@@ -191,6 +191,31 @@ app.post('/api/ml/analyze/batch', (req, res) => {
   res.json(results)
 })
 
+// Sentiment trends endpoint
+app.get('/api/sentiment/trends', (req, res) => {
+  const range = req.query['range'] || '7d'
+  
+  // Generate mock trend data for the specified range (default 7 days)
+  const mockTrends = []
+  const today = new Date()
+  const days = range === '30d' ? 30 : range === '90d' ? 90 : 7
+  
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    
+    mockTrends.push({
+      date: date.toISOString().split('T')[0], // YYYY-MM-DD format
+      positive: Math.floor(Math.random() * 50) + 30, // 30-80
+      neutral: Math.floor(Math.random() * 30) + 10,  // 10-40
+      negative: Math.floor(Math.random() * 20) + 5,  // 5-25
+      total: Math.floor(Math.random() * 100) + 50    // 50-150
+    })
+  }
+  
+  res.json(mockTrends)
+})
+
 // Basic auth routes (mock for now)
 app.post('/api/auth/register', (req, res) => {
   res.json({
@@ -201,31 +226,15 @@ app.post('/api/auth/register', (req, res) => {
 })
 
 app.post('/api/auth/login', (req, res) => {
-  // Mock login - in real app, validate credentials against database
-  const { email, password } = req.body
-  
-  if (!email || !password) {
-    return res.status(400).json({
-      success: false,
-      message: 'Email and password are required'
-    })
-  }
-  
-  // Mock user data based on email
-  const userName = email === 'aishwaryabodhe1122@gmail.com' ? 'Aishwarya Bodhe' : 
-                   email.split('@')[0].replace(/[0-9]/g, '').replace(/[._]/g, ' ')
-                   .split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-  
   res.json({
     success: true,
     message: 'Login successful',
     token: 'mock-jwt-token',
     user: { 
       id: '123', 
-      email: email, 
-      name: userName,
-      role: 'user',
-      createdAt: new Date().toISOString()
+      email: req.body.email || 'aishwaryabodhe1122@gmail.com', 
+      name: 'Aishwarya Bodhe',
+      role: 'admin'
     }
   })
 })
@@ -245,8 +254,9 @@ app.get('/api/auth/me', (req, res) => {
     success: true,
     user: { 
       id: '123', 
-      email: 'user@example.com', 
-      name: 'Test User',
+      email: 'aishwaryabodhe1122@gmail.com', 
+      name: 'Aishwarya Bodhe',
+      role: 'admin',
       createdAt: new Date().toISOString()
     }
   })

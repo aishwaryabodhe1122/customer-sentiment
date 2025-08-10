@@ -36,7 +36,7 @@ export function Navbar() {
             
             {user ? (
               <div className="flex items-center space-x-4">
-                <span className="text-gray-700 text-sm">Welcome, {user.name}</span>
+                {/* <span className="text-gray-700 text-sm">Welcome, {user.name}</span> */}
                 <button
                   onClick={logout}
                   className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
@@ -89,7 +89,7 @@ export function Navbar() {
               
               {user ? (
                 <div className="px-3 py-2">
-                  <p className="text-gray-700 text-sm mb-2">Welcome, {user.name}</p>
+                  {/* <p className="text-gray-700 text-sm mb-2">Welcome, {user.name}</p> */}
                   <button
                     onClick={logout}
                     className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
