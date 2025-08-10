@@ -1,11 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function StatusPage() {
   const [email, setEmail] = useState('')
   const [toast, setToast] = useState({ show: false, type: 'success', message: '' })
   const [isSubscribing, setIsSubscribing] = useState(false)
+
+  // Scroll to subscribe section if coming from help page
+  useEffect(() => {
+    if (window.location.hash === '#subscribe') {
+      setTimeout(() => {
+        const subscribeSection = document.getElementById('subscribe-section')
+        if (subscribeSection) {
+          subscribeSection.scrollIntoView({ behavior: 'smooth' })
+        }
+      }, 100)
+    }
+  }, [])
 
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ show: true, type, message })
@@ -245,7 +257,7 @@ export default function StatusPage() {
         </div>
 
         {/* Subscribe to Updates */}
-        <div className="mt-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-8 text-center">
+        <div id="subscribe-section" className="mt-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-8 text-center">
           <h2 className="text-2xl font-bold text-white mb-4">Stay Updated</h2>
           <p className="text-blue-100 mb-6">
             Subscribe to get notified about service updates and maintenance windows.

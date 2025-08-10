@@ -1,6 +1,44 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+
 export default function HelpCenterPage() {
+  const router = useRouter()
+  const [toast, setToast] = useState({ show: false, type: 'success', message: '' })
+
+  const showToast = (type: 'success' | 'error' | 'info', message: string) => {
+    setToast({ show: true, type, message })
+    setTimeout(() => setToast({ show: false, type: 'success', message: '' }), 4000)
+  }
+
+  const handleLiveChat = () => {
+    showToast('info', '🤖 Live Chat Bot functionality is releasing soon! Stay tuned for AI-powered instant support.')
+  }
+
+  const handleEmailSupport = () => {
+    const subject = encodeURIComponent('Support Request - SentimentTracker')
+    const body = encodeURIComponent('Hi,\n\nI need help with:\n\n[Please describe your issue here]\n\nThank you!')
+    window.open(`https://mail.google.com/mail/?view=cm&to=aishwaryabodhe1122@gmail.com&su=${subject}&body=${body}`, '_blank')
+  }
+
+  const handleScheduleCall = () => {
+    window.open('tel:+919998887776', '_self')
+  }
+
+  const handleArticleClick = (article: string) => {
+    // Create URL-friendly slug from article title
+    const slug = article.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    router.push(`/help/articles/${slug}`)
+  }
+
+  const handleContactSupport = () => {
+    router.push('/contact')
+  }
+
+  const handleJoinCommunity = () => {
+    router.push('/status#subscribe')
+  }
   const faqs = [
     {
       question: "How accurate is the sentiment analysis?",
@@ -100,17 +138,26 @@ export default function HelpCenterPage() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition-shadow cursor-pointer">
+          <div 
+            onClick={handleLiveChat}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition-shadow cursor-pointer hover:bg-gray-50"
+          >
             <div className="text-3xl mb-4">💬</div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Live Chat</h3>
             <p className="text-gray-600 text-sm">Get instant help from our support team</p>
           </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition-shadow cursor-pointer">
+          <div 
+            onClick={handleEmailSupport}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition-shadow cursor-pointer hover:bg-gray-50"
+          >
             <div className="text-3xl mb-4">📧</div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Email Support</h3>
             <p className="text-gray-600 text-sm">Send us a detailed message</p>
           </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition-shadow cursor-pointer">
+          <div 
+            onClick={handleScheduleCall}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition-shadow cursor-pointer hover:bg-gray-50"
+          >
             <div className="text-3xl mb-4">📞</div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Schedule Call</h3>
             <p className="text-gray-600 text-sm">Book a one-on-one session</p>
@@ -128,9 +175,12 @@ export default function HelpCenterPage() {
                 <ul className="space-y-2">
                   {category.articles.map((article, articleIndex) => (
                     <li key={articleIndex}>
-                      <a href="#" className="text-sm text-blue-600 hover:text-blue-800 hover:underline">
+                      <button 
+                        onClick={() => handleArticleClick(article)}
+                        className="text-sm text-blue-600 hover:text-blue-800 hover:underline text-left"
+                      >
                         {article}
-                      </a>
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -161,15 +211,57 @@ export default function HelpCenterPage() {
             Our support team is available 24/7 to help you succeed with SentimentTracker.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-blue-600 px-6 py-3 rounded-md font-medium hover:bg-gray-100 transition-colors">
+            <button 
+              onClick={handleContactSupport}
+              className="bg-white text-blue-600 px-6 py-3 rounded-md font-medium hover:bg-gray-100 transition-colors"
+            >
               Contact Support
             </button>
-            <button className="border border-white text-white px-6 py-3 rounded-md font-medium hover:bg-white hover:text-blue-600 transition-colors">
+            <button 
+              onClick={handleJoinCommunity}
+              className="border border-white text-white px-6 py-3 rounded-md font-medium hover:bg-white hover:text-blue-600 transition-colors"
+            >
               Join Community Forum
             </button>
           </div>
         </div>
       </div>
+
+      {/* Custom Toast Notification */}
+      {toast.show && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out ${
+          toast.type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : toast.type === 'error'
+            ? 'bg-red-500 text-white'
+            : 'bg-blue-500 text-white'
+        } animate-slide-in-right`}>
+          <div className="flex items-center">
+            {toast.type === 'success' ? (
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : toast.type === 'error' ? (
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
+            <span className="font-medium">{toast.message}</span>
+            <button
+              onClick={() => setToast({ show: false, type: 'success', message: '' })}
+              className="ml-4 text-white hover:text-gray-200"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
