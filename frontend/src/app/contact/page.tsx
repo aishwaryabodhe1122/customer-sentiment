@@ -11,12 +11,61 @@ export default function ContactPage() {
     message: '',
     priority: 'medium'
   })
+  const [toast, setToast] = useState({ show: false, type: 'success', message: '' })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ show: true, type, message })
+    setTimeout(() => setToast({ show: false, type: 'success', message: '' }), 4000)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission
-    console.log('Contact form submitted:', formData)
-    alert('Thank you for your message! We\'ll get back to you within 24 hours.')
+    
+    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+      showToast('error', 'Please fill in all required fields')
+      return
+    }
+
+    if (!formData.email.includes('@')) {
+      showToast('error', 'Please enter a valid email address')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      // Submit to backend API
+      const response = await fetch('http://localhost:5000/api/contact/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        // Reset form on success
+        setFormData({
+          name: '',
+          email: '',
+          company: '',
+          subject: '',
+          message: '',
+          priority: 'medium'
+        })
+        showToast('success', data.message)
+      } else {
+        showToast('error', data.message || 'Failed to send message. Please try again.')
+      }
+    } catch (error) {
+      console.error('Contact form error:', error)
+      showToast('error', 'Network error. Please check your connection and try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -139,9 +188,21 @@ export default function ContactPage() {
 
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 transition-colors"
+                disabled={isSubmitting}
+                className={`w-full px-6 py-3 rounded-lg transition-colors font-medium ${
+                  isSubmitting 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700'
+                } text-white`}
               >
-                Send Message
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Sending...
+                  </div>
+                ) : (
+                  'Send Message'
+                )}
               </button>
             </form>
           </div>
@@ -160,7 +221,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">Email</h3>
-                    <p className="text-gray-600">support@sentimenttracker.com</p>
+                    <p className="text-gray-600">aishwaryabodhe1122@gmail.com</p>
                     <p className="text-sm text-gray-500">We'll respond within 24 hours</p>
                   </div>
                 </div>
@@ -186,8 +247,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">Phone</h3>
-                    <p className="text-gray-600">+1 (555) 123-4567</p>
-                    <p className="text-sm text-gray-500">Mon-Fri, 9AM-6PM EST</p>
+                    <p className="text-gray-600">+91 9998887776</p>
+                    <p className="text-sm text-gray-500">Mon-Fri, 9AM-6PM IST</p>
                   </div>
                 </div>
               </div>
@@ -207,9 +268,9 @@ export default function ContactPage() {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">Address</h3>
                     <p className="text-gray-600">
-                      123 AI Street<br />
-                      San Francisco, CA 94105<br />
-                      United States
+                      A/P - Hinjewadi Phase-1<br />
+                      Pune, Maharashtra<br />
+                      India
                     </p>
                   </div>
                 </div>
@@ -237,6 +298,36 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
+
+      {/* Custom Toast Notification */}
+      {toast.show && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out ${
+          toast.type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : 'bg-red-500 text-white'
+        } animate-slide-in-right`}>
+          <div className="flex items-center">
+            {toast.type === 'success' ? (
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+            <span className="font-medium">{toast.message}</span>
+            <button
+              onClick={() => setToast({ show: false, type: 'success', message: '' })}
+              className="ml-4 text-white hover:text-gray-200"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

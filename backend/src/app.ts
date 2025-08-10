@@ -369,6 +369,76 @@ app.get('/api/preferences/cookies', (req, res) => {
   }
 })
 
+// Contact form submission endpoint
+app.post('/api/contact/submit', (req, res) => {
+  const { name, email, company, subject, message, priority } = req.body
+  
+  if (!name || !email || !subject || !message) {
+    return res.status(400).json({
+      success: false,
+      message: 'Name, email, subject, and message are required'
+    })
+  }
+  
+  if (!email.includes('@')) {
+    return res.status(400).json({
+      success: false,
+      message: 'Valid email address is required'
+    })
+  }
+  
+  // Initialize global storage for contact submissions
+  if (!global.contactSubmissions) {
+    global.contactSubmissions = []
+  }
+  
+  // Create contact submission record
+  const contactSubmission = {
+    id: Date.now().toString(),
+    name,
+    email,
+    company: company || '',
+    subject,
+    message,
+    priority: priority || 'medium',
+    submittedAt: new Date().toISOString(),
+    status: 'new',
+    userAgent: req.headers['user-agent'] || 'unknown',
+    ip: req.ip
+  }
+  
+  global.contactSubmissions.push(contactSubmission)
+  
+  console.log(`New contact form submission from ${name} (${email}):`)
+  console.log(`Subject: ${subject}`)
+  console.log(`Priority: ${priority}`)
+  console.log(`Total contact submissions: ${global.contactSubmissions.length}`)
+  
+  res.json({
+    success: true,
+    message: 'Your message has been sent successfully! We\'ll get back to you within 24 hours.',
+    data: { 
+      id: contactSubmission.id,
+      submittedAt: contactSubmission.submittedAt 
+    }
+  })
+})
+
+// Get contact submissions (admin endpoint)
+app.get('/api/contact/submissions', (req, res) => {
+  if (!global.contactSubmissions) {
+    global.contactSubmissions = []
+  }
+  
+  res.json({
+    success: true,
+    data: {
+      submissions: global.contactSubmissions,
+      total: global.contactSubmissions.length
+    }
+  })
+})
+
 // Error handling middleware
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Error:', err)
