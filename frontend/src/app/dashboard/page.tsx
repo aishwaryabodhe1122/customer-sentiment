@@ -54,7 +54,7 @@ export default function DashboardPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="mt-2 text-gray-600">
-            Welcome back{user ? `, ${user.name}` : ''}! Here's your sentiment analysis overview.
+            Welcome back{user ? `, ${user.name || user.email?.split('@')[0] || 'User'}` : ', User'}! Here's your sentiment analysis overview.
           </p>
         </div>
 

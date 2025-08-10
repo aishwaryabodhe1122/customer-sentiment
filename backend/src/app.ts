@@ -201,11 +201,32 @@ app.post('/api/auth/register', (req, res) => {
 })
 
 app.post('/api/auth/login', (req, res) => {
+  // Mock login - in real app, validate credentials against database
+  const { email, password } = req.body
+  
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email and password are required'
+    })
+  }
+  
+  // Mock user data based on email
+  const userName = email === 'aishwaryabodhe1122@gmail.com' ? 'Aishwarya Bodhe' : 
+                   email.split('@')[0].replace(/[0-9]/g, '').replace(/[._]/g, ' ')
+                   .split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+  
   res.json({
     success: true,
-    message: 'Login endpoint (mock)',
+    message: 'Login successful',
     token: 'mock-jwt-token',
-    user: { id: '123', email: req.body.email, name: 'Test User' }
+    user: { 
+      id: '123', 
+      email: email, 
+      name: userName,
+      role: 'user',
+      createdAt: new Date().toISOString()
+    }
   })
 })
 
