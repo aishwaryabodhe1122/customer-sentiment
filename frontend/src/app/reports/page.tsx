@@ -124,16 +124,215 @@ export default function ReportsPage() {
     setIsGenerating(true)
     // Simulate report generation
     await new Promise(resolve => setTimeout(resolve, 2000))
-    setIsGenerating(false)
     
-    // Create and download a mock PDF
-    const element = document.createElement('a')
-    const file = new Blob(['Mock PDF Report Content'], { type: 'text/plain' })
-    element.href = URL.createObjectURL(file)
-    element.download = `${selectedReport}-${dateRange}-report.pdf`
-    document.body.appendChild(element)
-    element.click()
-    document.body.removeChild(element)
+    try {
+      // Generate actual PDF content
+      const pdfContent = generatePDFContent(currentReport, selectedReport, dateRange)
+      
+      // Create PDF blob
+      const blob = new Blob([pdfContent], { type: 'application/pdf' })
+      
+      // Create download link
+      const element = document.createElement('a')
+      element.href = URL.createObjectURL(blob)
+      element.download = `${selectedReport}-${dateRange}-report.pdf`
+      document.body.appendChild(element)
+      element.click()
+      document.body.removeChild(element)
+      
+      // Clean up
+      URL.revokeObjectURL(element.href)
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      // Fallback to simple text-based PDF-like content
+      const fallbackContent = generateFallbackPDFContent(currentReport, selectedReport, dateRange)
+      const blob = new Blob([fallbackContent], { type: 'text/plain' })
+      
+      const element = document.createElement('a')
+      element.href = URL.createObjectURL(blob)
+      element.download = `${selectedReport}-${dateRange}-report.txt`
+      document.body.appendChild(element)
+      element.click()
+      document.body.removeChild(element)
+    }
+    
+    setIsGenerating(false)
+  }
+
+  // Generate PDF-like content (simplified PDF format)
+  const generatePDFContent = (report: any, reportType: string, dateRange: string) => {
+    const date = new Date().toLocaleDateString()
+    const title = report.title || 'Sentiment Analysis Report'
+    
+    // Create a simple PDF-like structure using PDF format basics
+    const pdfHeader = `%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj
+
+4 0 obj
+<<
+/Length 1000
+>>
+stream
+BT
+/F1 18 Tf
+50 750 Td
+(${title}) Tj
+0 -30 Td
+/F1 12 Tf
+(Generated: ${date}) Tj
+0 -20 Td
+(Date Range: ${dateRange}) Tj
+0 -40 Td
+(Report Type: ${reportType.replace('-', ' ').toUpperCase()}) Tj
+`
+
+    let contentStream = pdfHeader
+
+    // Add report-specific content
+    if (reportType === 'sentiment-summary' && report.data) {
+      contentStream += `
+0 -40 Td
+(SENTIMENT SUMMARY) Tj
+0 -30 Td
+(Total Mentions: ${report.data.totalMentions?.toLocaleString() || 'N/A'}) Tj
+0 -20 Td
+(Positive Rate: ${report.data.positiveRate || 'N/A'}%) Tj
+0 -20 Td
+(Negative Rate: ${report.data.negativeRate || 'N/A'}%) Tj
+0 -20 Td
+(Neutral Rate: ${report.data.neutralRate || 'N/A'}%) Tj
+0 -20 Td
+(Average Score: ${report.data.averageScore || 'N/A'}/10) Tj`
+    } else if (reportType === 'platform-analysis' && report.data?.platforms) {
+      contentStream += `
+0 -40 Td
+(PLATFORM ANALYSIS) Tj`
+      report.data.platforms.forEach((platform: any, index: number) => {
+        contentStream += `
+0 -30 Td
+(${platform.name}: ${platform.mentions?.toLocaleString() || 'N/A'} mentions) Tj
+0 -15 Td
+(  Positive: ${platform.positive || 'N/A'}% | Negative: ${platform.negative || 'N/A'}% | Neutral: ${platform.neutral || 'N/A'}%) Tj`
+      })
+    } else if (reportType === 'trend-analysis' && report.data?.trends) {
+      contentStream += `
+0 -40 Td
+(TREND ANALYSIS) Tj
+0 -30 Td
+(Data Points: ${report.data.trends.length || 'N/A'}) Tj
+0 -20 Td
+(Period: ${dateRange}) Tj`
+    }
+
+    const pdfFooter = `
+ET
+endstream
+endobj
+
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
+xref
+0 6
+0000000000 65535 f 
+0000000010 00000 n 
+0000000079 00000 n 
+0000000173 00000 n 
+0000000301 00000 n 
+0000001500 00000 n 
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+1600
+%%EOF`
+
+    return contentStream + pdfFooter
+  }
+
+  // Fallback content for when PDF generation fails
+  const generateFallbackPDFContent = (report: any, reportType: string, dateRange: string) => {
+    const date = new Date().toLocaleDateString()
+    const title = report.title || 'Sentiment Analysis Report'
+    
+    let content = `${title}
+Generated: ${date}
+Date Range: ${dateRange}
+Report Type: ${reportType.replace('-', ' ').toUpperCase()}
+
+`
+
+    if (reportType === 'sentiment-summary' && report.data) {
+      content += `SENTIMENT SUMMARY
+================
+Total Mentions: ${report.data.totalMentions?.toLocaleString() || 'N/A'}
+Positive Rate: ${report.data.positiveRate || 'N/A'}%
+Negative Rate: ${report.data.negativeRate || 'N/A'}%
+Neutral Rate: ${report.data.neutralRate || 'N/A'}%
+Average Score: ${report.data.averageScore || 'N/A'}/10
+
+Top Keywords: ${report.data.topKeywords?.join(', ') || 'N/A'}
+Bottom Keywords: ${report.data.bottomKeywords?.join(', ') || 'N/A'}
+`
+    } else if (reportType === 'platform-analysis' && report.data?.platforms) {
+      content += `PLATFORM ANALYSIS
+================
+`
+      report.data.platforms.forEach((platform: any) => {
+        content += `${platform.name}: ${platform.mentions?.toLocaleString() || 'N/A'} mentions
+  Positive: ${platform.positive || 'N/A'}% | Negative: ${platform.negative || 'N/A'}% | Neutral: ${platform.neutral || 'N/A'}%
+
+`
+      })
+    } else if (reportType === 'trend-analysis' && report.data?.trends) {
+      content += `TREND ANALYSIS
+==============
+Data Points: ${report.data.trends.length || 'N/A'}
+Period: ${dateRange}
+
+Recent Trends:
+`
+      report.data.trends.slice(-5).forEach((trend: any) => {
+        content += `${trend.date}: Positive ${trend.positive}%, Negative ${trend.negative}%, Neutral ${trend.neutral}%
+`
+      })
+    }
+
+    return content
   }
 
   const handleExportData = () => {
