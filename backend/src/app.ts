@@ -24,13 +24,17 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }))
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS!) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS!) || 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
-})
-app.use('/api/', limiter)
+// Rate limiting - Disabled for development
+if (process.env.NODE_ENV === 'production') {
+  const limiter = rateLimit({
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS!) || 15 * 60 * 1000, // 15 minutes
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS!) || 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  })
+  app.use('/api/', limiter)
+}
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }))
@@ -48,29 +52,143 @@ app.get('/api/health', (_req, res) => {
 
 // Basic sentiment routes (mock data for now)
 app.get('/api/sentiment/trends', (_req, res) => {
+  const mockTrends = [
+    { date: '2024-01-01', positive: 65, negative: 20, neutral: 15, total: 100 },
+    { date: '2024-01-02', positive: 70, negative: 18, neutral: 12, total: 120 },
+    { date: '2024-01-03', positive: 68, negative: 22, neutral: 10, total: 110 },
+    { date: '2024-01-04', positive: 72, negative: 16, neutral: 12, total: 130 },
+    { date: '2024-01-05', positive: 69, negative: 19, neutral: 12, total: 125 },
+    { date: '2024-01-06', positive: 74, negative: 15, neutral: 11, total: 140 },
+    { date: '2024-01-07', positive: 71, negative: 17, neutral: 12, total: 135 }
+  ]
+  
   res.json({
     success: true,
-    data: {
-      trends: [
-        { date: '2024-01-01', positive: 65, negative: 20, neutral: 15 },
-        { date: '2024-01-02', positive: 70, negative: 18, neutral: 12 },
-        { date: '2024-01-03', positive: 68, negative: 22, neutral: 10 }
-      ]
-    }
+    data: mockTrends
   })
 })
 
 app.get('/api/sentiment/topics', (_req, res) => {
+  const mockTopics = [
+    {
+      topic: 'Product Quality',
+      count: 245,
+      sentiment_distribution: { positive: 70, negative: 20, neutral: 10 }
+    },
+    {
+      topic: 'Customer Service',
+      count: 189,
+      sentiment_distribution: { positive: 65, negative: 25, neutral: 10 }
+    },
+    {
+      topic: 'Shipping',
+      count: 156,
+      sentiment_distribution: { positive: 60, negative: 30, neutral: 10 }
+    },
+    {
+      topic: 'Pricing',
+      count: 134,
+      sentiment_distribution: { positive: 45, negative: 40, neutral: 15 }
+    },
+    {
+      topic: 'User Experience',
+      count: 98,
+      sentiment_distribution: { positive: 75, negative: 15, neutral: 10 }
+    }
+  ]
+  
   res.json({
     success: true,
-    data: {
-      topics: [
-        { topic: 'Product Quality', sentiment: 0.8, mentions: 150 },
-        { topic: 'Customer Service', sentiment: 0.6, mentions: 120 },
-        { topic: 'Pricing', sentiment: -0.2, mentions: 80 }
-      ]
-    }
+    data: mockTopics
   })
+})
+
+app.get('/api/data/sources', (_req, res) => {
+  const mockDataSources = [
+    {
+      id: '1',
+      name: 'Twitter API',
+      type: 'twitter',
+      status: 'active',
+      lastFetch: new Date().toISOString(),
+      totalRecords: 1247
+    },
+    {
+      id: '2',
+      name: 'Instagram API',
+      type: 'instagram',
+      status: 'active',
+      lastFetch: new Date().toISOString(),
+      totalRecords: 892
+    },
+    {
+      id: '3',
+      name: 'Product Reviews',
+      type: 'reviews',
+      status: 'active',
+      lastFetch: new Date().toISOString(),
+      totalRecords: 2156
+    },
+    {
+      id: '4',
+      name: 'CSV Upload',
+      type: 'csv',
+      status: 'inactive',
+      lastFetch: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      totalRecords: 456
+    }
+  ]
+  
+  res.json({
+    success: true,
+    data: mockDataSources
+  })
+})
+
+// ML Service fallback endpoints (when ML service is not running)
+app.post('/api/ml/analyze', (req, res) => {
+  const { text } = req.body
+  
+  // Mock sentiment analysis
+  const mockSentiment = {
+    text,
+    sentiment: Math.random() > 0.6 ? 'positive' : Math.random() > 0.3 ? 'neutral' : 'negative',
+    confidence: Math.random() * 0.4 + 0.6, // 0.6 to 1.0
+    emotions: {
+      joy: Math.random() * 0.8,
+      anger: Math.random() * 0.3,
+      sadness: Math.random() * 0.3,
+      surprise: Math.random() * 0.5,
+      fear: Math.random() * 0.2,
+      disgust: Math.random() * 0.2
+    },
+    topics: ['product', 'service', 'experience'],
+    timestamp: new Date().toISOString()
+  }
+  
+  res.json(mockSentiment)
+})
+
+app.post('/api/ml/analyze/batch', (req, res) => {
+  const { texts } = req.body
+  
+  const results = texts.map((text: string) => ({
+    text,
+    sentiment: Math.random() > 0.6 ? 'positive' : Math.random() > 0.3 ? 'neutral' : 'negative',
+    confidence: Math.random() * 0.4 + 0.6,
+    emotions: {
+      joy: Math.random() * 0.8,
+      anger: Math.random() * 0.3,
+      sadness: Math.random() * 0.3,
+      surprise: Math.random() * 0.5,
+      fear: Math.random() * 0.2,
+      disgust: Math.random() * 0.2
+    },
+    topics: ['product', 'service', 'experience'],
+    timestamp: new Date().toISOString()
+  }))
+  
+  res.json(results)
 })
 
 // Basic auth routes (mock for now)
@@ -88,6 +206,28 @@ app.post('/api/auth/login', (req, res) => {
     message: 'Login endpoint (mock)',
     token: 'mock-jwt-token',
     user: { id: '123', email: req.body.email, name: 'Test User' }
+  })
+})
+
+app.get('/api/auth/me', (req, res) => {
+  // Mock endpoint to get current user data
+  const authHeader = req.headers.authorization
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      success: false,
+      message: 'No token provided'
+    })
+  }
+  
+  // Mock user data - in real app, decode JWT and get user from database
+  res.json({
+    success: true,
+    user: { 
+      id: '123', 
+      email: 'user@example.com', 
+      name: 'Test User',
+      createdAt: new Date().toISOString()
+    }
   })
 })
 

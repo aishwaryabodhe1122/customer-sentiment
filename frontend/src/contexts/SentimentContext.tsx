@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useState, useCallback } from 'react'
 import { sentimentService } from '@/services/sentiment'
 import toast from 'react-hot-toast'
 
@@ -72,7 +72,7 @@ export function SentimentProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const getTrends = async (dateRange: string): Promise<TrendData[]> => {
+  const getTrends = useCallback(async (dateRange: string): Promise<TrendData[]> => {
     try {
       setLoading(true)
       const trendData = await sentimentService.getTrends(dateRange)
@@ -84,7 +84,7 @@ export function SentimentProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const clearAnalysis = () => {
     setCurrentAnalysis(null)

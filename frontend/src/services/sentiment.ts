@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 const ML_API_URL = process.env.NEXT_PUBLIC_ML_SERVICE_URL || 'http://localhost:8000'
 
 interface SentimentData {
@@ -54,11 +54,27 @@ class SentimentService {
   }
 
   async analyzeSentiment(text: string): Promise<SentimentData> {
-    const response = await fetch(`${ML_API_URL}/analyze`, {
+    // Try ML service first, fallback to backend mock
+    try {
+      const response = await fetch(`${ML_API_URL}/analyze`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
+      })
+
+      if (response.ok) {
+        return response.json()
+      }
+    } catch (error) {
+      console.log('ML service unavailable, using backend fallback')
+    }
+
+    // Fallback to backend mock endpoint
+    const response = await fetch(`${API_URL}/api/ml/analyze`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: this.getAuthHeaders(),
       body: JSON.stringify({ text }),
     })
 
@@ -71,11 +87,27 @@ class SentimentService {
   }
 
   async analyzeMultiple(texts: string[]): Promise<SentimentData[]> {
-    const response = await fetch(`${ML_API_URL}/analyze/batch`, {
+    // Try ML service first, fallback to backend mock
+    try {
+      const response = await fetch(`${ML_API_URL}/analyze/batch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ texts }),
+      })
+
+      if (response.ok) {
+        return response.json()
+      }
+    } catch (error) {
+      console.log('ML service unavailable, using backend fallback')
+    }
+
+    // Fallback to backend mock endpoint
+    const response = await fetch(`${API_URL}/api/ml/analyze/batch`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: this.getAuthHeaders(),
       body: JSON.stringify({ texts }),
     })
 
