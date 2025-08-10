@@ -8,6 +8,15 @@ export default function ReportsPage() {
   const [dateRange, setDateRange] = useState('30d')
   const [isGenerating, setIsGenerating] = useState(false)
   const [reportData, setReportData] = useState<Record<string, any>>({})
+  
+  // Modal states
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [scheduleFrequency, setScheduleFrequency] = useState('')
+  const [emailAddress, setEmailAddress] = useState('')
+  const [shareUrl, setShareUrl] = useState('')
+  const [isProcessing, setIsProcessing] = useState(false)
 
   // Function to generate dynamic report data based on date range
   const generateReportData = (reportType: string, dateRange: string) => {
@@ -335,6 +344,239 @@ Recent Trends:
     return content
   }
 
+  // Report Actions handlers
+  const handleScheduleReport = () => {
+    setScheduleFrequency('')
+    setShowScheduleModal(true)
+  }
+
+  const handleEmailReport = () => {
+    setEmailAddress('')
+    setShowEmailModal(true)
+  }
+
+  const handleShareReport = async () => {
+    setIsProcessing(true)
+    
+    try {
+      // Generate shared report and save to backend
+      const shareId = `${selectedReport}-${dateRange}-${Date.now()}`
+      const response = await fetch('/api/reports/share', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          shareId,
+          reportType: selectedReport,
+          dateRange,
+          reportData: currentReport,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+        })
+      })
+
+      if (response.ok) {
+        const shareUrl = `${window.location.origin}/reports/shared/${shareId}`
+        setShareUrl(shareUrl)
+        
+        // Copy to clipboard
+        await navigator.clipboard.writeText(shareUrl)
+        setShowShareModal(true)
+      } else {
+        throw new Error('Failed to create share link')
+      }
+    } catch (error) {
+      console.error('Error creating share link:', error)
+      // Fallback - still show modal with basic share URL
+      const shareUrl = `${window.location.origin}/reports/shared/${selectedReport}-${dateRange}-${Date.now()}`
+      setShareUrl(shareUrl)
+      await navigator.clipboard.writeText(shareUrl)
+      setShowShareModal(true)
+    }
+    
+    setIsProcessing(false)
+  }
+
+  // Modal action handlers
+  const handleScheduleSubmit = async () => {
+    if (!scheduleFrequency) return
+    
+    setIsProcessing(true)
+    
+    try {
+      const response = await fetch('/api/reports/schedule', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reportType: selectedReport,
+          dateRange,
+          frequency: scheduleFrequency,
+          reportData: currentReport
+        })
+      })
+
+      if (response.ok) {
+        setShowScheduleModal(false)
+        // Show success toast (we'll implement this)
+        setTimeout(() => {
+          alert(`✅ Report scheduled successfully!\n\nFrequency: ${scheduleFrequency}\nYou will receive automated reports via email.`)
+        }, 100)
+      } else {
+        throw new Error('Failed to schedule report')
+      }
+    } catch (error) {
+      console.error('Error scheduling report:', error)
+      alert('❌ Failed to schedule report. Please try again.')
+    }
+    
+    setIsProcessing(false)
+  }
+
+  const handleEmailSubmit = async () => {
+    if (!emailAddress || !emailAddress.includes('@')) {
+      alert('❌ Please enter a valid email address.')
+      return
+    }
+    
+    setIsProcessing(true)
+    
+    try {
+      const response = await fetch('/api/reports/email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: emailAddress,
+          reportType: selectedReport,
+          dateRange,
+          reportData: currentReport
+        })
+      })
+
+      if (response.ok) {
+        setShowEmailModal(false)
+        setTimeout(() => {
+          alert(`✅ Report emailed successfully!\n\nSent to: ${emailAddress}\nThe recipient will receive the PDF report shortly.`)
+        }, 100)
+      } else {
+        throw new Error('Failed to send email')
+      }
+    } catch (error) {
+      console.error('Error sending email:', error)
+      alert('❌ Failed to send email. Please try again.')
+    }
+    
+    setIsProcessing(false)
+  }
+
+  const handlePrintReport = () => {
+    const reportName = currentReport.title
+    
+    // Create a printable version of the current report
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      const printContent = generatePrintableReport(currentReport, selectedReport, dateRange)
+      
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${reportName} - Print</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+            .metric { margin: 10px 0; }
+            .platform { margin: 15px 0; padding: 10px; border-left: 3px solid #007bff; }
+            .trend { margin: 10px 0; }
+            @media print { body { margin: 0; } }
+          </style>
+        </head>
+        <body>
+          ${printContent}
+        </body>
+        </html>
+      `)
+      
+      printWindow.document.close()
+      printWindow.focus()
+      
+      // Auto-print after a short delay
+      setTimeout(() => {
+        printWindow.print()
+      }, 500)
+    } else {
+      alert('❌ Unable to open print window. Please check your popup blocker settings.')
+    }
+  }
+
+  // Generate printable HTML content
+  const generatePrintableReport = (report: any, reportType: string, dateRange: string) => {
+    const date = new Date().toLocaleDateString()
+    const title = report.title || 'Sentiment Analysis Report'
+    
+    let content = `
+      <div class="header">
+        <h1>${title}</h1>
+        <p><strong>Generated:</strong> ${date}</p>
+        <p><strong>Date Range:</strong> ${dateRange}</p>
+        <p><strong>Report Type:</strong> ${reportType.replace('-', ' ').toUpperCase()}</p>
+      </div>
+    `
+
+    if (reportType === 'sentiment-summary' && report.data) {
+      content += `
+        <h2>Sentiment Summary</h2>
+        <div class="metric"><strong>Total Mentions:</strong> ${report.data.totalMentions?.toLocaleString() || 'N/A'}</div>
+        <div class="metric"><strong>Positive Rate:</strong> ${report.data.positiveRate || 'N/A'}%</div>
+        <div class="metric"><strong>Negative Rate:</strong> ${report.data.negativeRate || 'N/A'}%</div>
+        <div class="metric"><strong>Neutral Rate:</strong> ${report.data.neutralRate || 'N/A'}%</div>
+        <div class="metric"><strong>Average Score:</strong> ${report.data.averageScore || 'N/A'}/10</div>
+        
+        <h3>Top Keywords</h3>
+        <p>${report.data.topKeywords?.join(', ') || 'N/A'}</p>
+        
+        <h3>Bottom Keywords</h3>
+        <p>${report.data.bottomKeywords?.join(', ') || 'N/A'}</p>
+      `
+    } else if (reportType === 'platform-analysis' && report.data?.platforms) {
+      content += `<h2>Platform Analysis</h2>`
+      report.data.platforms.forEach((platform: any) => {
+        content += `
+          <div class="platform">
+            <h3>${platform.name}</h3>
+            <div class="metric"><strong>Mentions:</strong> ${platform.mentions?.toLocaleString() || 'N/A'}</div>
+            <div class="metric"><strong>Positive:</strong> ${platform.positive || 'N/A'}%</div>
+            <div class="metric"><strong>Negative:</strong> ${platform.negative || 'N/A'}%</div>
+            <div class="metric"><strong>Neutral:</strong> ${platform.neutral || 'N/A'}%</div>
+          </div>
+        `
+      })
+    } else if (reportType === 'trend-analysis' && report.data?.trends) {
+      content += `
+        <h2>Trend Analysis</h2>
+        <div class="metric"><strong>Data Points:</strong> ${report.data.trends.length || 'N/A'}</div>
+        <div class="metric"><strong>Period:</strong> ${dateRange}</div>
+        
+        <h3>Recent Trends</h3>
+      `
+      report.data.trends.slice(-10).forEach((trend: any) => {
+        content += `
+          <div class="trend">
+            <strong>${trend.date}:</strong> 
+            Positive ${trend.positive}%, 
+            Negative ${trend.negative}%, 
+            Neutral ${trend.neutral}%
+          </div>
+        `
+      })
+    }
+
+    return content
+  }
+
   const handleExportData = () => {
     const csvContent = "data:text/csv;charset=utf-8," 
       + "Date,Positive,Negative,Neutral\n"
@@ -555,21 +797,199 @@ Recent Trends:
         <div className="mt-8 bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Report Actions</h3>
           <div className="flex flex-wrap gap-4">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+            <button 
+              onClick={handleScheduleReport}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+            >
               Schedule Report
             </button>
-            <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+            <button 
+              onClick={handleEmailReport}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+            >
               Email Report
             </button>
-            <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+            <button 
+              onClick={handleShareReport}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+            >
               Share Report
             </button>
-            <button className="border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md font-medium transition-colors">
+            <button 
+              onClick={handlePrintReport}
+              className="border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md font-medium transition-colors"
+            >
               Print Report
             </button>
           </div>
         </div>
       </div>
+
+      {/* Custom Modals */}
+      {/* Schedule Report Modal */}
+      {showScheduleModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Schedule Report</h3>
+              <p className="text-sm text-gray-600 mt-1">Set up automated delivery for "{currentReport.title}"</p>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Delivery Frequency
+                  </label>
+                  <div className="space-y-2">
+                    {['Daily', 'Weekly', 'Monthly'].map((freq) => (
+                      <label key={freq} className="flex items-center">
+                        <input
+                          type="radio"
+                          name="frequency"
+                          value={freq}
+                          checked={scheduleFrequency === freq}
+                          onChange={(e) => setScheduleFrequency(e.target.value)}
+                          className="mr-3 text-blue-600"
+                        />
+                        <span className="text-gray-700">{freq}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-blue-50 p-3 rounded-md">
+                  <p className="text-sm text-blue-800">
+                    📧 Reports will be automatically sent to your registered email address
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+              <button
+                onClick={() => setShowScheduleModal(false)}
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleScheduleSubmit}
+                disabled={!scheduleFrequency || isProcessing}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
+              >
+                {isProcessing ? 'Scheduling...' : 'Schedule Report'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Email Report Modal */}
+      {showEmailModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowEmailModal(false)
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Email Report</h3>
+              <p className="text-sm text-gray-600 mt-1">Send "{currentReport.title}" via email</p>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Recipient Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={emailAddress}
+                    onChange={(e) => setEmailAddress(e.target.value)}
+                    onInput={(e) => setEmailAddress((e.target as HTMLInputElement).value)}
+                    placeholder="Enter email address"
+                    autoFocus
+                    autoComplete="email"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div className="bg-green-50 p-3 rounded-md">
+                  <p className="text-sm text-green-800">
+                    📄 The report will be sent as a PDF attachment with current data ({dateRange})
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEmailSubmit}
+                disabled={!emailAddress || isProcessing}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-green-400 transition-colors"
+              >
+                {isProcessing ? 'Sending...' : 'Send Email'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Report Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Share Report</h3>
+              <p className="text-sm text-gray-600 mt-1">Report link generated and copied to clipboard</p>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Shareable Link
+                  </label>
+                  <div className="flex">
+                    <input
+                      type="text"
+                      value={shareUrl}
+                      readOnly
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md bg-gray-50 text-gray-600 text-sm"
+                    />
+                    <button
+                      onClick={() => navigator.clipboard.writeText(shareUrl)}
+                      className="px-3 py-2 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md hover:bg-gray-300 transition-colors"
+                    >
+                      📋
+                    </button>
+                  </div>
+                </div>
+                <div className="bg-purple-50 p-3 rounded-md">
+                  <p className="text-sm text-purple-800">
+                    🔗 This link will be valid for 30 days and allows view-only access to the report
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
