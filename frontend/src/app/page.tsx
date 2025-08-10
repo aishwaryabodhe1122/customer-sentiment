@@ -6,7 +6,7 @@ import { FeatureGrid } from '@/components/home/FeatureGrid'
 import { DemoSection } from '@/components/home/DemoSection'
 import { StatsSection } from '@/components/home/StatsSection'
 import { CTASection } from '@/components/home/CTASection'
-import { SentimentAnalyzer } from '@/components/sentiment/SentimentAnalyzer'
+import { SentimentAnalyzer } from '@/components/home/SentimentAnalyzer'
 
 export default function HomePage() {
   const [showDemo, setShowDemo] = useState(false)

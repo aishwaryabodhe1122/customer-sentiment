@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
-import { User, IUser } from '@/models/User'
+import { User, IUser } from '../models/User'
 import { CustomError } from './errorHandler'
 
 export interface AuthRequest extends Request {
@@ -15,7 +15,8 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       return next(new CustomError('Access denied. No token provided.', 401))
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string }
+    const secret = process.env.JWT_SECRET || 'fallback-secret-key-for-development'
+    const decoded = jwt.verify(token, secret) as { id: string }
     const user = await User.findById(decoded.id).select('+password')
 
     if (!user) {
@@ -26,8 +27,8 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     user.lastLogin = new Date()
     await user.save()
 
-    // Reset API usage if needed
-    user.resetApiUsage()
+    // Reset API usage if needed (commented out for now)
+    // user.resetApiUsage()
 
     req.user = user
     next()
