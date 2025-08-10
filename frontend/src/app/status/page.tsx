@@ -1,6 +1,52 @@
 'use client'
 
+import { useState } from 'react'
+
 export default function StatusPage() {
+  const [email, setEmail] = useState('')
+  const [toast, setToast] = useState({ show: false, type: 'success', message: '' })
+  const [isSubscribing, setIsSubscribing] = useState(false)
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ show: true, type, message })
+    setTimeout(() => setToast({ show: false, type: 'success', message: '' }), 4000)
+  }
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!email || !email.includes('@')) {
+      showToast('error', 'Please enter a valid email address')
+      return
+    }
+
+    setIsSubscribing(true)
+    
+    try {
+      // Make actual API call to backend
+      const response = await fetch('http://localhost:5000/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setEmail('')
+        showToast('success', 'Successfully subscribed to status updates!')
+      } else {
+        showToast('error', data.message || 'Subscription failed. Please try again.')
+      }
+    } catch (error) {
+      console.error('Subscription error:', error)
+      showToast('error', 'Network error. Please check your connection and try again.')
+    } finally {
+      setIsSubscribing(false)
+    }
+  }
   const services = [
     {
       name: 'API Gateway',
@@ -204,18 +250,84 @@ export default function StatusPage() {
           <p className="text-blue-100 mb-6">
             Subscribe to get notified about service updates and maintenance windows.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex-1 px-4 py-2 rounded-md text-gray-900"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="flex-1 px-4 py-2 rounded-md text-gray-900 focus:ring-2 focus:ring-white focus:ring-opacity-50"
             />
-            <button className="bg-white text-blue-600 px-6 py-2 rounded-md font-medium hover:bg-gray-100 transition-colors">
-              Subscribe
+            <button 
+              type="submit"
+              disabled={isSubscribing}
+              className="bg-white text-blue-600 px-6 py-2 rounded-md font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubscribing ? 'Subscribing...' : 'Subscribe'}
             </button>
-          </div>
+          </form>
         </div>
+
+        {/* Custom Toast Notification */}
+        {toast.show && (
+          <div className="fixed top-4 right-4 z-50 animate-slide-in">
+            <div className={`px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 max-w-sm ${
+              toast.type === 'success' 
+                ? 'bg-green-500 text-white' 
+                : 'bg-red-500 text-white'
+            }`}>
+              <div className="flex-shrink-0">
+                {toast.type === 'success' ? (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )}
+              </div>
+              <div>
+                <p className="font-medium">{toast.type === 'success' ? 'Success!' : 'Error!'}</p>
+                <p className={`text-sm ${toast.type === 'success' ? 'text-green-100' : 'text-red-100'}`}>
+                  {toast.message}
+                </p>
+              </div>
+              <button
+                onClick={() => setToast({ show: false, type: 'success', message: '' })}
+                className={`flex-shrink-0 transition-colors ${
+                  toast.type === 'success' 
+                    ? 'text-green-200 hover:text-white' 
+                    : 'text-red-200 hover:text-white'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+      
+      {/* Custom Styles */}
+      <style jsx>{`
+        @keyframes slide-in {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        
+        .animate-slide-in {
+          animation: slide-in 0.3s ease-out;
+        }
+      `}</style>
     </div>
   )
 }

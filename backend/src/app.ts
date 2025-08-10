@@ -231,6 +231,144 @@ app.get('/api/auth/me', (req, res) => {
   })
 })
 
+// Newsletter subscription endpoint
+app.post('/api/newsletter/subscribe', (req, res) => {
+  const { email } = req.body
+  
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({
+      success: false,
+      message: 'Valid email address is required'
+    })
+  }
+  
+  // In a real app, save to database
+  // For now, we'll simulate saving to a simple in-memory store
+  if (!global.newsletterSubscribers) {
+    global.newsletterSubscribers = []
+  }
+  
+  // Check if email already exists
+  const existingSubscriber = global.newsletterSubscribers.find((sub: any) => sub.email === email)
+  if (existingSubscriber) {
+    return res.status(409).json({
+      success: false,
+      message: 'Email is already subscribed to our newsletter'
+    })
+  }
+  
+  // Add new subscriber
+  const subscriber = {
+    id: Date.now().toString(),
+    email,
+    subscribedAt: new Date().toISOString(),
+    status: 'active'
+  }
+  
+  global.newsletterSubscribers.push(subscriber)
+  
+  console.log(`New newsletter subscription: ${email}`)
+  console.log(`Total subscribers: ${global.newsletterSubscribers.length}`)
+  
+  res.json({
+    success: true,
+    message: 'Successfully subscribed to newsletter updates',
+    data: { email, subscribedAt: subscriber.subscribedAt }
+  })
+})
+
+// Get newsletter subscribers (admin endpoint)
+app.get('/api/newsletter/subscribers', (req, res) => {
+  if (!global.newsletterSubscribers) {
+    global.newsletterSubscribers = []
+  }
+  
+  res.json({
+    success: true,
+    data: {
+      subscribers: global.newsletterSubscribers,
+      total: global.newsletterSubscribers.length
+    }
+  })
+})
+
+// Cookie preferences endpoints
+app.post('/api/preferences/cookies', (req, res) => {
+  const { preferences, userEmail } = req.body
+  
+  if (!preferences) {
+    return res.status(400).json({
+      success: false,
+      message: 'Cookie preferences are required'
+    })
+  }
+  
+  // Initialize global storage for cookie preferences
+  if (!global.cookiePreferences) {
+    global.cookiePreferences = []
+  }
+  
+  // Find existing preferences for this user/session
+  const sessionId = userEmail || req.ip || 'anonymous'
+  const existingIndex = global.cookiePreferences.findIndex((pref: any) => pref.sessionId === sessionId)
+  
+  const cookiePreference: any = {
+    sessionId,
+    preferences,
+    updatedAt: new Date().toISOString(),
+    userAgent: req.headers['user-agent'] || 'unknown'
+  }
+  
+  if (existingIndex >= 0) {
+    // Update existing preferences
+    global.cookiePreferences[existingIndex] = cookiePreference
+  } else {
+    // Add new preferences
+    cookiePreference.id = Date.now().toString()
+    cookiePreference.createdAt = new Date().toISOString()
+    global.cookiePreferences.push(cookiePreference)
+  }
+  
+  console.log(`Cookie preferences saved for ${sessionId}:`, preferences)
+  console.log(`Total preference records: ${global.cookiePreferences.length}`)
+  
+  res.json({
+    success: true,
+    message: 'Cookie preferences saved successfully',
+    data: { preferences, updatedAt: cookiePreference.updatedAt }
+  })
+})
+
+// Get cookie preferences for a user/session
+app.get('/api/preferences/cookies', (req, res) => {
+  if (!global.cookiePreferences) {
+    global.cookiePreferences = []
+  }
+  
+  const sessionId = req.query['userEmail'] || req.ip || 'anonymous'
+  const userPreferences = global.cookiePreferences.find((pref: any) => pref.sessionId === sessionId)
+  
+  if (userPreferences) {
+    res.json({
+      success: true,
+      data: userPreferences
+    })
+  } else {
+    // Return default preferences
+    res.json({
+      success: true,
+      data: {
+        preferences: {
+          essential: true,
+          analytics: true,
+          functional: true,
+          marketing: false
+        }
+      }
+    })
+  }
+})
+
 // Error handling middleware
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Error:', err)

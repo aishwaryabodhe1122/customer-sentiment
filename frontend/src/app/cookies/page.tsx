@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function CookiePolicyPage() {
   const [showModal, setShowModal] = useState(false)
@@ -20,14 +20,65 @@ export default function CookiePolicyPage() {
     }))
   }
 
-  const savePreferences = () => {
-    // Save preferences to localStorage
-    localStorage.setItem('cookiePreferences', JSON.stringify(cookiePreferences))
-    setShowModal(false)
+  // Load existing preferences on page load
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/preferences/cookies')
+        const data = await response.json()
+        
+        if (data.success && data.data.preferences) {
+          setCookiePreferences(data.data.preferences)
+        }
+      } catch (error) {
+        console.error('Error loading cookie preferences:', error)
+        // Fallback to localStorage
+        const saved = localStorage.getItem('cookiePreferences')
+        if (saved) {
+          setCookiePreferences(JSON.parse(saved))
+        }
+      }
+    }
     
-    // Show custom toast notification
-    setShowToast(true)
-    setTimeout(() => setShowToast(false), 3000) // Hide after 3 seconds
+    loadPreferences()
+  }, [])
+
+  const savePreferences = async () => {
+    try {
+      // Save preferences to backend API
+      const response = await fetch('http://localhost:5000/api/preferences/cookies', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          preferences: cookiePreferences,
+          userEmail: null // Could be user email if logged in
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        // Also save to localStorage as backup
+        localStorage.setItem('cookiePreferences', JSON.stringify(cookiePreferences))
+        setShowModal(false)
+        
+        // Show custom toast notification
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 3000)
+      } else {
+        // Show error toast
+        alert('Failed to save preferences: ' + data.message)
+      }
+    } catch (error) {
+      console.error('Error saving cookie preferences:', error)
+      // Fallback to localStorage only
+      localStorage.setItem('cookiePreferences', JSON.stringify(cookiePreferences))
+      setShowModal(false)
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 3000)
+    }
   }
   return (
     <div className="min-h-screen bg-gray-50 py-8">
