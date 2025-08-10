@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
 
 export default function ReportsPage() {
@@ -596,7 +597,8 @@ Recent Trends:
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -990,6 +992,7 @@ Recent Trends:
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   )
 }

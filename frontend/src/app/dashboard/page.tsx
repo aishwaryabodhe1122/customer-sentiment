@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useState, useEffect, useCallback } from 'react'
 import { useSentiment } from '@/contexts/SentimentContext'
+import { useAuth } from '@/contexts/AuthContext'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
 
 const COLORS = ['#10b981', '#f59e0b', '#ef4444']
@@ -72,18 +73,24 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8 animate-fade-in">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 animate-slide-down">Dashboard</h1>
-          <p className="text-gray-600 animate-slide-up">
-            Welcome back{user?.name ? `, ${user.name}` : ''}! Here's your sentiment analysis overview.
-          </p>
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50">
+        {/* Dashboard Header */}
+        <div className="bg-white shadow animate-fade-in">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="py-6">
+              <h1 className="text-3xl font-bold text-gray-900">
+                Welcome back, {user?.name || 'User'}! 👋
+              </h1>
+              <p className="mt-2 text-gray-600">Here's what's happening with your sentiment analysis today.</p>
+            </div>
+          </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 animate-stagger-in">
+        {/* Main Dashboard Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 animate-stagger-in">
           <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -234,10 +241,9 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-      </div>
-      
-      {/* Custom Animations */}
-      <style jsx>{`
+
+        {/* Custom Animations */}
+        <style jsx>{`
         @keyframes fade-in {
           from { opacity: 0; }
           to { opacity: 1; }
@@ -300,7 +306,9 @@ export default function DashboardPage() {
         .animate-stagger-in > *:nth-child(2) { animation-delay: 0.2s; }
         .animate-stagger-in > *:nth-child(3) { animation-delay: 0.3s; }
         .animate-stagger-in > *:nth-child(4) { animation-delay: 0.4s; }
-      `}</style>
-    </div>
+        `}</style>
+        </div>
+      </div>
+    </ProtectedRoute>
   )
 }

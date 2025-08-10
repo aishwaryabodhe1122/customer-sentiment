@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { useSentiment } from '@/contexts/SentimentContext'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, ScatterChart, Scatter } from 'recharts'
 
@@ -216,7 +217,8 @@ export default function AnalyticsPage() {
   }
 
   return (
-  <div className="min-h-screen bg-gray-50 py-8">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50 py-8">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-8 animate-fade-in">
@@ -461,6 +463,7 @@ export default function AnalyticsPage() {
           animation: fade-in-up 1s ease-out 0.4s both;
         }
       `}</style>
-    </div>
+      </div>
+    </ProtectedRoute>
   )
 }

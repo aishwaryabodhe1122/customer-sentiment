@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
 interface User {
   id: string
@@ -233,7 +234,8 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <ProtectedRoute requireAdmin={true}>
+      <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8 animate-fade-in">
@@ -601,6 +603,7 @@ export default function AdminDashboard() {
           animation: slide-in-right 0.3s ease-out;
         }
       `}</style>
-    </div>
+      </div>
+    </ProtectedRoute>
   )
 }
