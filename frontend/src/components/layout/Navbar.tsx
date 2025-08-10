@@ -34,6 +34,11 @@ export function Navbar() {
             <Link href="/reports" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
               Reports
             </Link>
+            {user?.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'aishwaryabodhe1122@gmail.com') && (
+              <Link href="/admin" className="text-purple-700 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium transition-colors border border-purple-200 hover:border-purple-300">
+                Admin
+              </Link>
+            )}
             
             {user ? (
               <div className="flex items-center space-x-4">

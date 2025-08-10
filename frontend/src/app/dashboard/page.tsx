@@ -75,15 +75,15 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-gray-600">
-            Welcome back{user ? `, ${user.name || user.email?.split('@')[0] || 'User'}` : ', User'}! Here's your sentiment analysis overview.
+        <div className="mb-8 animate-fade-in">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2 animate-slide-down">Dashboard</h1>
+          <p className="text-gray-600 animate-slide-up">
+            Welcome back{user?.name ? `, ${user.name}` : ''}! Here's your sentiment analysis overview.
           </p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 animate-stagger-in">
           <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -158,9 +158,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8 animate-fade-in-up">
           {/* Sentiment Trends */}
-          <div className="bg-white rounded-lg shadow">
+          <div className="bg-white rounded-lg shadow hover:shadow-lg transition-all duration-300 transform hover:scale-105">
             <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
               <h3 className="text-base sm:text-lg font-semibold text-gray-900">Sentiment Trends</h3>
             </div>
@@ -182,32 +182,34 @@ export default function DashboardPage() {
           </div>
 
           {/* Sentiment Distribution Pie Chart */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Sentiment Distribution</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={sentimentDistribution}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {sentimentDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="bg-white rounded-lg shadow hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Sentiment Distribution</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={sentimentDistribution}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {sentimentDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow hover:shadow-lg transition-all duration-300 animate-slide-in-left">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900">Recent Activity</h3>
           </div>
@@ -233,6 +235,72 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      
+      {/* Custom Animations */}
+      <style jsx>{`
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes slide-down {
+          from { transform: translateY(-20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slide-up {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slide-in-left {
+          from { transform: translateX(-30px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes scale-in {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes fade-in-up {
+          from { transform: translateY(30px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.6s ease-out;
+        }
+        
+        .animate-slide-down {
+          animation: slide-down 0.8s ease-out;
+        }
+        
+        .animate-slide-up {
+          animation: slide-up 0.8s ease-out 0.2s both;
+        }
+        
+        .animate-slide-in-left {
+          animation: slide-in-left 1s ease-out 0.8s both;
+        }
+        
+        .animate-scale-in {
+          animation: scale-in 0.6s ease-out;
+        }
+        
+        .animate-fade-in-up {
+          animation: fade-in-up 1s ease-out 0.4s both;
+        }
+        
+        .animate-stagger-in > * {
+          animation: scale-in 0.6s ease-out;
+        }
+        
+        .animate-stagger-in > *:nth-child(1) { animation-delay: 0.1s; }
+        .animate-stagger-in > *:nth-child(2) { animation-delay: 0.2s; }
+        .animate-stagger-in > *:nth-child(3) { animation-delay: 0.3s; }
+        .animate-stagger-in > *:nth-child(4) { animation-delay: 0.4s; }
+      `}</style>
     </div>
   )
 }

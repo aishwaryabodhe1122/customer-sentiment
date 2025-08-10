@@ -207,205 +207,260 @@ export default function AnalyticsPage() {
     )
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Advanced Analytics</h1>
-          <p className="mt-2 text-gray-600">
-            Deep insights into customer sentiment patterns and trends
-          </p>
-        </div>
+  <div className="min-h-screen bg-gray-50 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div className="mb-8 animate-fade-in">
+        <h1 className="text-3xl font-bold text-gray-900 animate-slide-down">Analytics</h1>
+        <p className="mt-2 text-gray-600 animate-slide-up">
+          Detailed insights and metrics for your sentiment analysis data.
+        </p>
+      </div>
 
-        {/* Controls */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <label className="text-sm font-medium text-gray-700">Time Range:</label>
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="1d">Last 24 Hours</option>
-                <option value="7d">Last 7 Days</option>
-                <option value="30d">Last 30 Days</option>
-                <option value="90d">Last 90 Days</option>
-              </select>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <label className="text-sm font-medium text-gray-700">Metric:</label>
-              <select
-                value={selectedMetric}
-                onChange={(e) => setSelectedMetric(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="sentiment">Sentiment</option>
-                <option value="emotion">Emotion</option>
-                <option value="topics">Topics</option>
-                <option value="platforms">Platforms</option>
-              </select>
-            </div>
+      {/* Controls */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8 animate-scale-in hover:shadow-lg transition-all duration-300">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            <label className="text-sm font-medium text-gray-700">Time Range:</label>
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="1d">Last 24 Hours</option>
+              <option value="7d">Last 7 Days</option>
+              <option value="30d">Last 30 Days</option>
+              <option value="90d">Last 90 Days</option>
+            </select>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <label className="text-sm font-medium text-gray-700">Metric:</label>
+            <select
+              value={selectedMetric}
+              onChange={(e) => setSelectedMetric(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="sentiment">Sentiment</option>
+              <option value="emotion">Emotion</option>
+              <option value="topics">Topics</option>
+              <option value="platforms">Platforms</option>
+            </select>
           </div>
         </div>
+      </div>
 
-        {/* Main Analytics Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Sentiment Trends Over Time */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Sentiment Trends</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Area type="monotone" dataKey="positive" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="neutral" stackId="1" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="negative" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.6} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 animate-fade-in-up">
+        {/* Sentiment Trends Chart */}
+        <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sentiment Trends</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Area type="monotone" dataKey="positive" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.6} />
+              <Area type="monotone" dataKey="neutral" stackId="1" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.6} />
+              <Area type="monotone" dataKey="negative" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.6} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
 
-          {/* Dynamic Chart Based on Selected Metric */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              {selectedMetric === 'sentiment' && 'Sentiment Distribution'}
-              {selectedMetric === 'emotion' && 'Emotion Analysis'}
-              {selectedMetric === 'topics' && 'Topic Analysis'}
-              {selectedMetric === 'platforms' && 'Platform Comparison'}
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              {(() => {
-                if (selectedMetric === 'emotion') {
-                  return (
-                    <BarChart data={analyticsData.emotionBreakdown}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="emotion" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="#3b82f6" />
-                    </BarChart>
-                  )
-                }
-                if (selectedMetric === 'topics') {
-                  return (
-                    <BarChart data={analyticsData.topicTrends}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="topic" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="positive" fill="#10b981" />
-                      <Bar dataKey="negative" fill="#ef4444" />
-                    </BarChart>
-                  )
-                }
-                if (selectedMetric === 'platforms') {
-                  return (
-                    <BarChart data={analyticsData.platformComparison}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="platform" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="positive" fill="#10b981" />
-                      <Bar dataKey="neutral" fill="#f59e0b" />
-                      <Bar dataKey="negative" fill="#ef4444" />
-                    </BarChart>
-                  )
-                }
-                // Default: sentiment
+        {/* Dynamic Chart Based on Selected Metric */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            {selectedMetric === 'sentiment' && 'Sentiment Distribution'}
+            {selectedMetric === 'emotion' && 'Emotion Analysis'}
+            {selectedMetric === 'topics' && 'Topic Analysis'}
+            {selectedMetric === 'platforms' && 'Platform Comparison'}
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            {(() => {
+              if (selectedMetric === 'emotion') {
                 return (
-                  <BarChart data={[
-                    { name: 'Positive', value: 68, color: '#10b981' },
-                    { name: 'Neutral', value: 18, color: '#f59e0b' },
-                    { name: 'Negative', value: 14, color: '#ef4444' }
-                  ]}>
+                  <BarChart data={analyticsData.emotionBreakdown}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
+                    <XAxis dataKey="emotion" />
                     <YAxis />
                     <Tooltip />
                     <Bar dataKey="value" fill="#3b82f6" />
                   </BarChart>
                 )
-              })()}
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Topic Analysis */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Topic Sentiment Analysis</h3>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Topic</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mentions</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Positive %</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Negative %</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sentiment Score</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {analyticsData.topicTrends.map((topic, index) => (
-                  <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{topic.topic}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{topic.mentions.toLocaleString()}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">{topic.positive}%</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">{topic.negative}%</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                          <div 
-                            className={`h-2 rounded-full ${topic.positive > 60 ? 'bg-green-500' : topic.positive > 40 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                            style={{ width: `${topic.positive}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-sm text-gray-600">{topic.positive > 60 ? 'Positive' : topic.positive > 40 ? 'Mixed' : 'Negative'}</span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Platform Comparison & Hourly Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Platform Comparison */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Platform Comparison</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={analyticsData.platformComparison}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="platform" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="positive" stackId="a" fill="#10b981" />
-                <Bar dataKey="neutral" stackId="a" fill="#f59e0b" />
-                <Bar dataKey="negative" stackId="a" fill="#ef4444" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Hourly Activity Pattern */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Hourly Activity Pattern</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <ScatterChart data={analyticsData.hourlyActivity}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" domain={[0, 23]} />
-                <YAxis dataKey="mentions" />
-                <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                <Scatter dataKey="mentions" fill="#3b82f6" />
-              </ScatterChart>
-            </ResponsiveContainer>
-          </div>
+              }
+              if (selectedMetric === 'topics') {
+                return (
+                  <BarChart data={analyticsData.topicTrends}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="topic" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="positive" fill="#10b981" />
+                    <Bar dataKey="negative" fill="#ef4444" />
+                  </BarChart>
+                )
+              }
+              if (selectedMetric === 'platforms') {
+                return (
+                  <BarChart data={analyticsData.platformComparison}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="platform" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="positive" fill="#10b981" />
+                    <Bar dataKey="neutral" fill="#f59e0b" />
+                    <Bar dataKey="negative" fill="#ef4444" />
+                  </BarChart>
+                )
+              }
+              // Default: sentiment
+              return (
+                <BarChart data={[
+                  { name: 'Positive', value: 68, color: '#10b981' },
+                  { name: 'Neutral', value: 18, color: '#f59e0b' },
+                  { name: 'Negative', value: 14, color: '#ef4444' }
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#3b82f6" />
+                </BarChart>
+              )
+            })()}
+          </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Topic Analysis Table */}
+      <div className="bg-white rounded-lg shadow mb-8 animate-slide-in-left hover:shadow-lg transition-all duration-300">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Topic Sentiment Analysis</h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Topic</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mentions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Positive %</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Negative %</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sentiment Score</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {analyticsData.topicTrends.map((topic, index) => (
+                <tr key={index}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{topic.topic}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{topic.mentions.toLocaleString()}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">{topic.positive}%</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">{topic.negative}%</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                        <div 
+                          className={`h-2 rounded-full ${topic.positive > 60 ? 'bg-green-500' : topic.positive > 40 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                          style={{ width: `${topic.positive}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-sm text-gray-600">{topic.positive > 60 ? 'Positive' : topic.positive > 40 ? 'Mixed' : 'Negative'}</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Hourly Activity Pattern */}
+      <div className="bg-white rounded-lg shadow p-6 animate-slide-in-right hover:shadow-lg transition-all duration-300">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Hourly Activity Pattern</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <ScatterChart data={analyticsData.hourlyActivity}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="hour" domain={[0, 23]} />
+            <YAxis dataKey="mentions" />
+            <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+            <Scatter dataKey="mentions" fill="#3b82f6" />
+          </ScatterChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+    
+    {/* Custom Animations */}
+    <style jsx>{`
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes slide-down {
+          from { transform: translateY(-20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slide-up {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slide-in-left {
+          from { transform: translateX(-30px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slide-in-right {
+          from { transform: translateX(30px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes scale-in {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes fade-in-up {
+          from { transform: translateY(30px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.6s ease-out;
+        }
+        
+        .animate-slide-down {
+          animation: slide-down 0.8s ease-out;
+        }
+        
+        .animate-slide-up {
+          animation: slide-up 0.8s ease-out 0.2s both;
+        }
+        
+        .animate-slide-in-left {
+          animation: slide-in-left 1s ease-out 0.6s both;
+        }
+        
+        .animate-slide-in-right {
+          animation: slide-in-right 1s ease-out 0.8s both;
+        }
+        
+        .animate-scale-in {
+          animation: scale-in 0.6s ease-out 0.3s both;
+        }
+        
+        .animate-fade-in-up {
+          animation: fade-in-up 1s ease-out 0.4s both;
+        }
+      `}</style>
     </div>
   )
 }
