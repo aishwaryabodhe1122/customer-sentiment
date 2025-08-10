@@ -18,6 +18,7 @@ export default function DashboardPage() {
     neutralRate: 14,
     avgSentimentScore: 7.2
   })
+  const [activities, setActivities] = useState<any[]>([])
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -25,6 +26,13 @@ export default function DashboardPage() {
         const trendsData = await getTrends('7d')
         console.log('Dashboard trends data:', trendsData)
         console.log('Trends from context:', trends)
+        
+        // Load recent activities from API
+        const activityResponse = await fetch('http://localhost:5000/api/dashboard/activity')
+        const activityData = await activityResponse.json()
+        if (activityData.success) {
+          setActivities(activityData.activities)
+        }
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
       } finally {
@@ -75,24 +83,26 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
                   <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Analyses</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.totalAnalyses.toLocaleString()}</p>
+              <div className="ml-3 sm:ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">Total Analyses</dt>
+                  <dd className="text-sm sm:text-lg font-medium text-gray-900">{stats.totalAnalyses.toLocaleString()}</dd>
+                </dl>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -101,14 +111,16 @@ export default function DashboardPage() {
                   </svg>
                 </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Positive Rate</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.positiveRate}%</p>
+              <div className="ml-3 sm:ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">Positive Rate</dt>
+                  <dd className="text-sm sm:text-lg font-medium text-gray-900">{stats.positiveRate}%</dd>
+                </dl>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
@@ -117,14 +129,16 @@ export default function DashboardPage() {
                   </svg>
                 </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Negative Rate</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.negativeRate}%</p>
+              <div className="ml-3 sm:ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">Negative Rate</dt>
+                  <dd className="text-sm sm:text-lg font-medium text-gray-900">{stats.negativeRate}%</dd>
+                </dl>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
@@ -133,30 +147,38 @@ export default function DashboardPage() {
                   </svg>
                 </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Avg Score</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.avgSentimentScore}/10</p>
+              <div className="ml-3 sm:ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">Avg Score</dt>
+                  <dd className="text-sm sm:text-lg font-medium text-gray-900">{stats.avgSentimentScore}/10</dd>
+                </dl>
               </div>
             </div>
           </div>
         </div>
 
         {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Sentiment Trends Chart */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Sentiment Trends (7 Days)</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="positive" stroke="#10b981" strokeWidth={2} />
-                <Line type="monotone" dataKey="neutral" stroke="#f59e0b" strokeWidth={2} />
-                <Line type="monotone" dataKey="negative" stroke="#ef4444" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8">
+          {/* Sentiment Trends */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">Sentiment Trends</h3>
+            </div>
+            <div className="p-4 sm:p-6">
+              <div className="h-64 sm:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trends && trends.length > 0 ? trends : fallbackTrends}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" fontSize={12} />
+                    <YAxis fontSize={12} />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="positive" stroke="#10b981" strokeWidth={2} />
+                    <Line type="monotone" dataKey="neutral" stroke="#f59e0b" strokeWidth={2} />
+                    <Line type="monotone" dataKey="negative" stroke="#ef4444" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
 
           {/* Sentiment Distribution Pie Chart */}
@@ -186,28 +208,27 @@ export default function DashboardPage() {
 
         {/* Recent Activity */}
         <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Recent Activity</h3>
           </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {[
-                { text: "Customer review analysis completed", time: "2 minutes ago", sentiment: "positive" },
-                { text: "Social media monitoring updated", time: "15 minutes ago", sentiment: "neutral" },
-                { text: "Weekly report generated", time: "1 hour ago", sentiment: "positive" },
-                { text: "Alert: Negative sentiment spike detected", time: "3 hours ago", sentiment: "negative" }
-              ].map((activity, index) => (
-                <div key={index} className="flex items-center space-x-3">
-                  <div className={`w-2 h-2 rounded-full ${
+          <div className="p-4 sm:p-6">
+            <div className="space-y-3 sm:space-y-4">
+              {activities.length > 0 ? activities.map((activity, index) => (
+                <div key={index} className="flex items-start space-x-3">
+                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
                     activity.sentiment === 'positive' ? 'bg-green-500' :
                     activity.sentiment === 'negative' ? 'bg-red-500' : 'bg-yellow-500'
                   }`}></div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">{activity.text}</p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs sm:text-sm text-gray-900 break-words">{activity.text}</p>
+                    <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center text-gray-500 py-4">
+                  <p className="text-sm">Loading recent activities...</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

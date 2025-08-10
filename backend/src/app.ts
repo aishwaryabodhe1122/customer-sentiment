@@ -466,277 +466,76 @@ app.get('/api/contact/submissions', (req, res) => {
     }
   })
 })
-
-// Import email service
-import emailService from './services/emailService'
-
-// Report Actions Endpoints
-
-// Email Report endpoint
-app.post('/api/reports/email', async (req, res) => {
-  const { email, reportType, dateRange, reportData } = req.body
-  
-  if (!email || !email.includes('@')) {
-    return res.status(400).json({
-      success: false,
-      message: 'Valid email address is required'
-    })
+// Helper functions for dynamic data
+function getRelativeTime(minutes: number): string {
+  if (minutes < 60) {
+    return `${minutes} minute${minutes === 1 ? '' : 's'} ago`
+  } else if (minutes < 1440) {
+    const hours = Math.floor(minutes / 60)
+    return `${hours} hour${hours === 1 ? '' : 's'} ago`
+  } else {
+    const days = Math.floor(minutes / 1440)
+    return `${days} day${days === 1 ? '' : 's'} ago`
   }
-  
-  if (!reportType || !reportData) {
-    return res.status(400).json({
-      success: false,
-      message: 'Report type and data are required'
-    })
-  }
-  
-  // Initialize global storage for email reports
-  if (!global.emailReports) {
-    global.emailReports = []
-  }
-  
-  try {
-    // Send actual email using email service
-    const emailSent = await emailService.sendReportEmail(
-      email,
-      reportType,
-      dateRange || '30d',
-      reportData
-    )
-    
-    // Create email report record
-    const emailReport = {
-      id: Date.now().toString(),
-      email,
-      reportType,
-      dateRange: dateRange || '30d',
-      reportData,
-      sentAt: new Date().toISOString(),
-      status: emailSent ? 'sent' : 'failed',
-      userAgent: req.headers['user-agent'] || 'unknown'
-    }
-    
-    global.emailReports.push(emailReport)
-    
-    console.log(`Report email attempt to ${email}:`)
-    console.log(`Report Type: ${reportType}`)
-    console.log(`Date Range: ${dateRange}`)
-    console.log(`Status: ${emailSent ? 'SUCCESS' : 'FAILED'}`)
-    console.log(`Total email reports: ${global.emailReports.length}`)
-    
-    if (emailSent) {
-      res.json({
-        success: true,
-        message: 'Report has been sent successfully to your email inbox!',
-        data: { id: emailReport.id, sentAt: emailReport.sentAt }
-      })
-    } else {
-      res.status(500).json({
-        success: false,
-        message: 'Failed to send email. Please check email configuration.',
-        data: { id: emailReport.id }
-      })
-    }
-  } catch (error) {
-    console.error('Error in email report endpoint:', error)
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error while sending email'
-    })
-  }
-})
-
-// Schedule Report endpoint
-app.post('/api/reports/schedule', async (req, res) => {
-  const { reportType, dateRange, frequency, reportData } = req.body
-  
-  if (!reportType || !frequency || !reportData) {
-    return res.status(400).json({
-      success: false,
-      message: 'Report type, frequency, and data are required'
-    })
-  }
-  
-  if (!['Daily', 'Weekly', 'Monthly'].includes(frequency)) {
-    return res.status(400).json({
-      success: false,
-      message: 'Frequency must be Daily, Weekly, or Monthly'
-    })
-  }
-  
-  // Initialize global storage for scheduled reports
-  if (!global.scheduledReports) {
-    global.scheduledReports = []
-  }
-  
-  try {
-    // Calculate next run time
-    const nextRunAt = calculateNextRun(frequency)
-    
-    // Create scheduled report record
-    const scheduledReport = {
-      id: Date.now().toString(),
-      reportType,
-      dateRange: dateRange || '30d',
-      frequency,
-      reportData,
-      scheduledAt: new Date().toISOString(),
-      nextRunAt,
-      status: 'active',
-      userAgent: req.headers['user-agent'] || 'unknown'
-    }
-    
-    global.scheduledReports.push(scheduledReport)
-    
-    // Send confirmation email to user
-    const userEmail = 'aishwaryabodhe7007@gmail.com' // In production, get from authenticated user
-    const emailSent = await emailService.sendScheduleConfirmationEmail(
-      userEmail,
-      reportType,
-      frequency,
-      nextRunAt
-    )
-    
-    console.log(`Report scheduled:`)
-    console.log(`Report Type: ${reportType}`)
-    console.log(`Frequency: ${frequency}`)
-    console.log(`Next Run: ${nextRunAt}`)
-    console.log(`Confirmation email sent: ${emailSent ? 'SUCCESS' : 'FAILED'}`)
-    console.log(`Total scheduled reports: ${global.scheduledReports.length}`)
-    
-    res.json({
-      success: true,
-      message: `Report scheduled successfully for ${frequency.toLowerCase()} delivery! Confirmation email sent to your inbox.`,
-      data: { 
-        id: scheduledReport.id, 
-        nextRunAt: scheduledReport.nextRunAt,
-        frequency: frequency,
-        confirmationEmailSent: emailSent
-      }
-    })
-  } catch (error) {
-    console.error('Error in schedule report endpoint:', error)
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error while scheduling report'
-    })
-  }
-})
-
-// Share Report endpoint
-app.post('/api/reports/share', (req, res) => {
-  const { shareId, reportType, dateRange, reportData, expiresAt } = req.body
-  
-  if (!shareId || !reportType || !reportData) {
-    return res.status(400).json({
-      success: false,
-      message: 'Share ID, report type, and data are required'
-    })
-  }
-  
-  // Initialize global storage for shared reports
-  if (!global.sharedReports) {
-    global.sharedReports = []
-  }
-  
-  // Create shared report record
-  const sharedReport = {
-    id: Date.now().toString(),
-    shareId,
-    reportType,
-    dateRange: dateRange || '30d',
-    reportData,
-    createdAt: new Date().toISOString(),
-    expiresAt: expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    accessCount: 0,
-    status: 'active',
-    userAgent: req.headers['user-agent'] || 'unknown'
-  }
-  
-  global.sharedReports.push(sharedReport)
-  
-  console.log(`Report shared:`)
-  console.log(`Share ID: ${shareId}`)
-  console.log(`Report Type: ${reportType}`)
-  console.log(`Expires At: ${sharedReport.expiresAt}`)
-  console.log(`Total shared reports: ${global.sharedReports.length}`)
-  
-  res.json({
-    success: true,
-    message: 'Report share link created successfully',
-    data: { 
-      shareId,
-      shareUrl: `/reports/shared/${shareId}`,
-      expiresAt: sharedReport.expiresAt
-    }
-  })
-})
-
-// Helper function to calculate next run time for scheduled reports
-function calculateNextRun(frequency: string): string {
-  const now = new Date()
-  let nextRun = new Date(now)
-  
-  switch (frequency) {
-    case 'Daily':
-      nextRun.setDate(now.getDate() + 1)
-      nextRun.setHours(9, 0, 0, 0) // 9 AM next day
-      break
-    case 'Weekly':
-      nextRun.setDate(now.getDate() + 7)
-      nextRun.setHours(9, 0, 0, 0) // 9 AM next week
-      break
-    case 'Monthly':
-      nextRun.setMonth(now.getMonth() + 1)
-      nextRun.setDate(1) // First day of next month
-      nextRun.setHours(9, 0, 0, 0) // 9 AM
-      break
-    default:
-      nextRun.setDate(now.getDate() + 1)
-  }
-  
-  return nextRun.toISOString()
 }
 
-// Get Shared Report endpoint
-app.get('/api/reports/shared/:shareId', (req, res) => {
-  const { shareId } = req.params
+function getRecentDate(daysAgo: number): string {
+  const date = new Date()
+  date.setDate(date.getDate() - daysAgo)
+  return date.toISOString().split('T')[0]
+}
+
+// Get recent activity for dashboard
+app.get('/api/dashboard/activity', (_req, res) => {
+  const activities = [
+    { text: "Customer review analysis completed", time: getRelativeTime(2), sentiment: "positive" },
+    { text: "Social media monitoring updated", time: getRelativeTime(15), sentiment: "neutral" },
+    { text: "Weekly report generated", time: getRelativeTime(60), sentiment: "positive" },
+    { text: "Alert: Negative sentiment spike detected", time: getRelativeTime(180), sentiment: "negative" },
+    { text: "Data source integration successful", time: getRelativeTime(240), sentiment: "positive" },
+    { text: "Scheduled analysis completed", time: getRelativeTime(360), sentiment: "neutral" }
+  ]
   
-  if (!global.sharedReports) {
-    global.sharedReports = []
-  }
+  res.json({ success: true, activities })
+})
+
+// Get system status incidents
+app.get('/api/system/incidents', (_req, res) => {
+  const incidents = [
+    {
+      date: getRecentDate(3),
+      title: 'Scheduled Maintenance - Notification System',
+      status: 'ongoing',
+      description: 'We are performing scheduled maintenance on our notification system to improve reliability.',
+      updates: [
+        { time: '14:30 UTC', message: 'Maintenance started - Email notifications may be delayed' },
+        { time: '14:00 UTC', message: 'Maintenance window begins' }
+      ]
+    },
+    {
+      date: getRecentDate(6),
+      title: 'API Response Time Degradation',
+      status: 'resolved',
+      description: 'Some users experienced slower API response times due to increased traffic.',
+      updates: [
+        { time: '16:45 UTC', message: 'Issue fully resolved - All systems operating normally' },
+        { time: '16:20 UTC', message: 'Implementing fix - Response times improving' },
+        { time: '15:30 UTC', message: 'Investigating elevated response times' }
+      ]
+    },
+    {
+      date: getRecentDate(10),
+      title: 'Database Connection Issues',
+      status: 'resolved',
+      description: 'Brief database connectivity issues affecting data retrieval.',
+      updates: [
+        { time: '09:15 UTC', message: 'All database connections restored' },
+        { time: '08:45 UTC', message: 'Investigating connection timeouts' }
+      ]
+    }
+  ]
   
-  // Find the shared report
-  const sharedReport = global.sharedReports.find((report: any) => report.shareId === shareId)
-  
-  if (!sharedReport) {
-    return res.status(404).json({
-      success: false,
-      message: 'Shared report not found'
-    })
-  }
-  
-  // Check if report has expired
-  const now = new Date()
-  const expiresAt = new Date(sharedReport.expiresAt)
-  
-  if (now > expiresAt) {
-    return res.status(410).json({
-      success: false,
-      message: 'Shared report has expired'
-    })
-  }
-  
-  // Increment access count
-  sharedReport.accessCount = (sharedReport.accessCount || 0) + 1
-  
-  console.log(`Shared report accessed: ${shareId}`)
-  console.log(`Access count: ${sharedReport.accessCount}`)
-  
-  res.json({
-    success: true,
-    data: sharedReport
-  })
+  res.json({ success: true, incidents })
 })
 
 // Error handling middleware

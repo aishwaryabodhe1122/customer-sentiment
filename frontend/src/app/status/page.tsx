@@ -6,9 +6,28 @@ export default function StatusPage() {
   const [email, setEmail] = useState('')
   const [toast, setToast] = useState({ show: false, type: 'success', message: '' })
   const [isSubscribing, setIsSubscribing] = useState(false)
+  const [incidents, setIncidents] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Scroll to subscribe section if coming from help page
+  // Load incidents and handle scroll to subscribe
   useEffect(() => {
+    const loadIncidents = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/system/incidents')
+        const data = await response.json()
+        if (data.success) {
+          setIncidents(data.incidents)
+        }
+      } catch (error) {
+        console.error('Failed to load incidents:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadIncidents()
+
+    // Scroll to subscribe section if coming from help page
     if (window.location.hash === '#subscribe') {
       setTimeout(() => {
         const subscribeSection = document.getElementById('subscribe-section')
@@ -104,29 +123,7 @@ export default function StatusPage() {
     }
   ]
 
-  const incidents = [
-    {
-      date: '2024-01-08',
-      title: 'Scheduled Maintenance - Notification System',
-      status: 'ongoing',
-      description: 'We are performing scheduled maintenance on our notification system to improve reliability.',
-      updates: [
-        { time: '14:30 UTC', message: 'Maintenance started - Email notifications may be delayed' },
-        { time: '14:00 UTC', message: 'Maintenance window begins' }
-      ]
-    },
-    {
-      date: '2024-01-05',
-      title: 'API Response Time Degradation',
-      status: 'resolved',
-      description: 'Some users experienced slower API response times due to increased traffic.',
-      updates: [
-        { time: '16:45 UTC', message: 'Issue fully resolved - All systems operating normally' },
-        { time: '16:20 UTC', message: 'Implementing fix - Response times improving' },
-        { time: '15:30 UTC', message: 'Investigating elevated response times' }
-      ]
-    }
-  ]
+  // Dynamic incidents loaded from API
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -227,32 +224,47 @@ export default function StatusPage() {
             <h2 className="text-xl font-bold text-gray-900">Recent Incidents</h2>
           </div>
           <div className="divide-y divide-gray-200">
-            {incidents.map((incident, index) => (
+            {loading ? (
+              <div className="p-6 text-center text-gray-500">
+                <p>Loading incidents...</p>
+              </div>
+            ) : incidents.length > 0 ? incidents.map((incident, index) => (
               <div key={index} className="p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{incident.title}</h3>
-                    <p className="text-sm text-gray-500">{incident.date}</p>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900">{incident.title}</h3>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        incident.status === 'ongoing' ? 'bg-yellow-100 text-yellow-800' :
+                        incident.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {incident.status.charAt(0).toUpperCase() + incident.status.slice(1)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-2">{incident.date}</p>
+                    <p className="text-gray-600 mb-4">{incident.description}</p>
                   </div>
-                  <span className={`px-3 py-1 text-xs font-medium rounded-full capitalize ${
-                    incident.status === 'resolved' ? 'text-green-600 bg-green-100' : 
-                    incident.status === 'ongoing' ? 'text-yellow-600 bg-yellow-100' : 
-                    'text-gray-600 bg-gray-100'
-                  }`}>
-                    {incident.status}
-                  </span>
                 </div>
-                <p className="text-gray-600 mb-4">{incident.description}</p>
                 <div className="space-y-2">
-                  {incident.updates.map((update, updateIndex) => (
-                    <div key={updateIndex} className="flex items-start space-x-3 text-sm">
-                      <span className="text-gray-400 font-mono">{update.time}</span>
-                      <span className="text-gray-600">{update.message}</span>
+                  {incident.updates.map((update: any, updateIndex: number) => (
+                    <div key={updateIndex} className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-medium text-gray-900">{update.time}</span>
+                        </div>
+                        <span className="text-gray-600">{update.message}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="p-6 text-center text-gray-500">
+                <p>No recent incidents to display.</p>
+              </div>
+            )}
           </div>
         </div>
 
